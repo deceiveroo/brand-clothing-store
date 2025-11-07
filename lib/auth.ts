@@ -1,3 +1,8 @@
 // lib/auth.ts
+import { getServerSession } from "next-auth/next";
+
+// Для клиентских компонентов
 export { useSession, signIn, signOut } from "next-auth/react";
-export { getServerSession } from "next-auth/next";
+
+// Для серверных компонентов и API routes
+export const auth = getServerSession;

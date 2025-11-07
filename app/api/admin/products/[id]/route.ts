@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+const session = await getServerSession();
 import { prisma } from '@/lib/prisma';
 
 export async function PUT(
@@ -7,8 +7,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'admin') {
+    const session = await getServerSession();
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,7 +30,7 @@ export async function PUT(
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error('Admin product update error:', error);
+    console.error('Product update error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -42,8 +43,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'admin') {
+    const session = await getServerSession();
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -53,7 +55,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Admin product delete error:', error);
+    console.error('Product delete error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
