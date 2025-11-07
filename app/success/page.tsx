@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
@@ -22,13 +22,13 @@ interface Order {
   }>;
 }
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const orderId = searchParams?.get('orderId'); // ← ДОБАВЬТЕ ?.
+    const orderId = searchParams?.get('orderId');
     if (orderId) {
       fetchOrder(orderId);
     } else {
@@ -38,7 +38,6 @@ export default function SuccessPage() {
 
   const fetchOrder = async (orderId: string) => {
     try {
-      // В демо-режиме просто создаем фейковый заказ
       setOrder({
         id: orderId,
         total: 129.99,
@@ -127,5 +126,20 @@ export default function SuccessPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Загрузка...</p>
+        </div>
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
