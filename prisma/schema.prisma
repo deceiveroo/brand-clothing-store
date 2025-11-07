@@ -99,4 +99,8 @@ model CartItem {
 
   @@unique([userId, productId])
   @@map("cart_items")
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ea0b7b2df46c39117fcffc476237b17ae98879db
