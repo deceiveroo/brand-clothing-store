@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Grid3X3, List, X, SlidersHorizontal } from 'lucide-react';
-import ProductCard from '../../../components/ProductCard';
+import ProductCard from '../../components/ProductCard';
 
 interface Product {
   id: string;

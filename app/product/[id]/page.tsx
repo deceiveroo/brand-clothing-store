@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw } from 'lucide-react';
-import ProductViewer3D from '../../../../components/ProductViewer3D';
+import ProductViewer3D from '../../../components/ProductViewer3D';
 import toast from 'react-hot-toast';
 
 interface Product {
