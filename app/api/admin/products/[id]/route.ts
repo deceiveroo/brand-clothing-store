@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-const session = await getServerSession();
+import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 
 export async function PUT(
