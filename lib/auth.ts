@@ -38,22 +38,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async session({ token, session }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
-        session.user.role = token.role;
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-      }
-      return token;
-    },
-  }
-});
+  async session({ token, session }) {
+    if (token) {
+      session.user.id = token.id;
+      session.user.name = token.name;
+      session.user.email = token.email;
+      session.user.image = token.picture;
+      session.user.role = token.role as string;
+    }
+    return session;
+  },
+  async jwt({ token, user }) {
+    if (user) {
+      token.id = user.id;
+      token.role = user.role;
+    }
+    return token;
+  },
+}

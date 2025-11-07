@@ -41,7 +41,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
-    } else if (status === 'authenticated' && session?.user?.role !== 'admin') {
+    } else if (status === 'authenticated' && session?.user && 'role' in session.user && session.user.role !== 'admin') {
       router.push('/');
     } else {
       fetchProducts();
