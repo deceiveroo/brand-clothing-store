@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 const authConfig = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt" as const }, // ← добавьте 'as const'
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
