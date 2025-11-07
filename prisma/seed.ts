@@ -12,7 +12,7 @@ async function main() {
         price: 299.99,
         category: 'outerwear',
         featured: true,
-        images: ['/products/jacket-1.jpg', '/products/jacket-2.jpg']
+        images: '/products/jacket-1.jpg' // ← строка вместо массива
       },
       {
         name: 'Quantum Hoodie',
@@ -20,7 +20,7 @@ async function main() {
         price: 189.99,
         category: 'tops',
         featured: true,
-        images: ['/products/hoodie-1.jpg', '/products/hoodie-2.jpg']
+        images: '/products/hoodie-1.jpg' // ← строка вместо массива
       },
       {
         name: 'Cyber Pants',
@@ -28,7 +28,7 @@ async function main() {
         price: 159.99,
         category: 'bottoms',
         featured: true,
-        images: ['/products/pants-1.jpg', '/products/pants-2.jpg']
+        images: '/products/pants-1.jpg' // ← строка вместо массива
       },
       {
         name: 'Nano-T Shirt',
@@ -36,7 +36,7 @@ async function main() {
         price: 49.99,
         category: 'tops',
         featured: false,
-        images: ['/products/tshirt-1.jpg', '/products/tshirt-2.jpg']
+        images: '/products/tshirt-1.jpg' // ← строка вместо массива
       },
       {
         name: 'Holo Sneakers',
@@ -44,7 +44,7 @@ async function main() {
         price: 229.99,
         category: 'footwear',
         featured: true,
-        images: ['/products/sneakers-1.jpg', '/products/sneakers-2.jpg']
+        images: '/products/sneakers-1.jpg' // ← строка вместо массива
       },
       {
         name: 'Data Gloves',
@@ -52,7 +52,7 @@ async function main() {
         price: 79.99,
         category: 'accessories',
         featured: false,
-        images: ['/products/gloves-1.jpg', '/products/gloves-2.jpg']
+        images: '/products/gloves-1.jpg' // ← строка вместо массива
       }
     ],
     skipDuplicates: true,
