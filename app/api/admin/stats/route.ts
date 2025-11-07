@@ -1,31 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
-const session = await auth();
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'admin') {
+    const session = await getServerSession();
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [totalProducts, totalOrders, totalRevenue, totalUsers] = await Promise.all([
+    // Получаем статистику
+    const [
+      totalProducts,
+      totalOrders,
+      totalRevenue,
+      totalUsers
+    ] = await Promise.all([
       prisma.product.count(),
       prisma.order.count(),
       prisma.order.aggregate({
-        _sum: { total: true },
+        _sum: { total: true }
       }),
-      prisma.user.count(),
+      prisma.user.count()
     ]);
 
-    return NextResponse.json({
+    const stats = {
       totalProducts,
       totalOrders,
       totalRevenue: totalRevenue._sum.total || 0,
-      totalUsers,
-    });
+      totalUsers
+    };
+
+    return NextResponse.json(stats);
   } catch (error) {
-    console.error('Admin stats fetch error:', error);
+    console.error('Stats fetch error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
