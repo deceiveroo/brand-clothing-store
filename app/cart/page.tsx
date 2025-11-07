@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface CartItem {
   id: string;
@@ -79,22 +76,21 @@ export default function CartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: cartItems.map(item => ({
-            id: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            image: item.product.images[0],
+            productId: item.product.id,
             quantity: item.quantity,
+            price: item.product.price
           })),
         }),
       });
 
-      const { sessionId } = await res.json();
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to initialize');
-
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) {
-        toast.error(error.message || 'Checkout error');
+      const data = await res.json();
+      
+      if (data.success) {
+        // Перенаправляем на страницу успеха для демо-версии
+        router.push(`/success?orderId=${data.orderId}`);
+        toast.success('Order created successfully!');
+      } else {
+        toast.error(data.error || 'Checkout failed');
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -235,6 +231,10 @@ export default function CartPage() {
                 {loading ? 'Processing...' : 'Proceed to Checkout'}
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
+
+              <p className="text-sm text-slate-500 text-center mt-4">
+                ⚠️ Demo version - no real payment required
+              </p>
             </motion.div>
           </div>
         )}
