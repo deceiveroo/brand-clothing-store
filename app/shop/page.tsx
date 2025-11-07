@@ -10,10 +10,11 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  images: string[];
+  images: string;
   category: string;
   featured: boolean;
   inStock: boolean;
+  createdAt: string; // ← ДОБАВЛЕНО
 }
 
 interface FilterState {
