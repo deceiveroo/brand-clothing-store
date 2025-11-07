@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from '@/lib/prisma';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const authConfig = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -18,7 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: any) {
         if (!credentials?.email || !credentials?.password) return null;
 
         if (credentials.email === "admin" && credentials.password === "admin") {
@@ -35,7 +35,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async session({ token, session }: any) {
+    async session(params: any) {
+      const { token, session } = params;
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
@@ -45,7 +46,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    async jwt({ token, user }: any) {
+    async jwt(params: any) {
+      const { token, user } = params;
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -53,4 +55,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     }
   }
-});
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
