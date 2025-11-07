@@ -28,7 +28,7 @@ export default function SuccessPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const orderId = searchParams.get('orderId');
+    const orderId = searchParams?.get('orderId'); // ← ДОБАВЬТЕ ?.
     if (orderId) {
       fetchOrder(orderId);
     } else {
