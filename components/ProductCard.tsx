@@ -30,30 +30,30 @@ export default function ProductCard({ product, viewMode, index }: ProductCardPro
   const imageUrl = product.images || '/placeholder-product.jpg';
 
   const handleAddToCart = async () => {
-    if (!session) {
-      router.push('/auth/signin');
-      return;
-    }
+  if (!session) {
+    router.push('/auth/signin');
+    return;
+  }
 
-    try {
-      const res = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          quantity: 1,
-        }),
-      });
+  try {
+    const res = await fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: product.id,
+        quantity: 1,
+      }),
+    });
 
-      if (res.ok) {
-        toast.success('Added to cart!');
-      } else {
-        toast.error('Failed to add to cart');
-      }
-    } catch (error) {
-      toast.error('An error occurred');
+    if (res.ok) {
+      toast.success('Добавлено в корзину!');
+    } else {
+      toast.error('Ошибка при добавлении в корзину');
     }
-  };
+  } catch (error) {
+    toast.error('Произошла ошибка');
+  }
+};
 
   if (viewMode === 'list') {
     return (

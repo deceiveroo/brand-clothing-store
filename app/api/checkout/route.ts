@@ -10,35 +10,64 @@ export async function POST(request: NextRequest) {
     }
 
     const { items } = await request.json();
-    
-    const lineItems = items.map((item: any) => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-          images: [item.image],
-        },
-        unit_amount: Math.round(item.price * 100),
-      },
-      quantity: item.quantity,
-    }));
 
-    const stripeSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      success_url: `${request.headers.get('origin')}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.headers.get('origin')}/cart`,
-      metadata: {
-        userId: session.user.id,
+    // Получаем полную информацию о продуктах
+    const productIds = items.map((item: any) => item.productId);
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: productIds },
       },
     });
 
-    return NextResponse.json({ sessionId: stripeSession.id });
+    // Создаем заказ в базе данных
+    const order = await prisma.order.create({
+      data: {
+        userId: session.user.id,
+        total: items.reduce((sum: number, item: any) => {
+          const product = products.find(p => p.id === item.productId);
+          return sum + (product ? product.price * item.quantity : 0);
+        }, 0),
+        status: 'completed',
+        items: {
+          create: items.map((item: any) => {
+            const product = products.find(p => p.id === item.productId);
+            return {
+              productId: item.productId,
+              quantity: item.quantity,
+              price: product ? product.price : 0,
+            };
+          }),
+        },
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    // Очищаем корзину пользователя
+    await prisma.cartItem.deleteMany({
+      where: { userId: session.user.id },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      orderId: order.id,
+      message: '✅ Демо-платеж успешно завершен! Заказ создан.',
+      order: {
+        id: order.id,
+        total: order.total,
+        status: order.status,
+        items: order.items,
+      }
+    });
   } catch (error) {
     console.error('Checkout error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Ошибка при создании заказа' },
       { status: 500 }
     );
   }
