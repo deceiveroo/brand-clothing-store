@@ -11,7 +11,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  images: string[];
+  images: string; // Теперь это строка, а не массив
   category: string;
   featured: boolean;
 }
@@ -25,6 +25,9 @@ interface ProductCardProps {
 export default function ProductCard({ product, viewMode, index }: ProductCardProps) {
   const { data: session } = useSession();
   const router = useRouter();
+
+  // Получаем URL изображения (images теперь строка)
+  const imageUrl = product.images || '/placeholder-product.jpg';
 
   const handleAddToCart = async () => {
     if (!session) {
@@ -62,7 +65,7 @@ export default function ProductCard({ product, viewMode, index }: ProductCardPro
       >
         <div className="flex gap-6">
           <img
-            src={product.images[0]}
+            src={imageUrl}
             alt={product.name}
             className="w-32 h-32 object-cover rounded-xl"
           />
@@ -111,7 +114,7 @@ export default function ProductCard({ product, viewMode, index }: ProductCardPro
     >
       <div className="aspect-square mb-4 bg-slate-100 rounded-xl overflow-hidden relative">
         <img
-          src={product.images[0]}
+          src={imageUrl}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />
