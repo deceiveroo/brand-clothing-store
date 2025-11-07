@@ -63,17 +63,19 @@ model VerificationToken {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String
   price       Float
   images      String
   category    String
-  featured    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  featured    Boolean     @default(false)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  inStock     Boolean     @default(true)
+  
   cartItems   CartItem[]
-  inStock     Boolean  @default(true)
+  orderItems  OrderItem[]  // ← ДОБАВЛЕНО
 
   @@map("products")
 }
