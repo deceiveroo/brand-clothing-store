@@ -1,34 +1,32 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Package, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 interface Order {
   id: string;
   total: number;
   status: string;
   createdAt: string;
-  products: string; // Изменили с orderItems на products (строка JSON)
-}
-
-interface OrderItem {
-  id: string;
-  quantity: number;
-  price: number;
-  product: {
+  items: Array<{
     id: string;
-    name: string;
-    images: string;
-  };
+    product: {
+      name: string;
+      images: string;
+    };
+    quantity: number;
+    price: number;
+  }>;
 }
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -39,10 +37,32 @@ export default function OrdersPage() {
   }, [status, router]);
 
   const fetchOrders = async () => {
-    const res = await fetch('/api/orders');
-    if (res.ok) {
-      const data = await res.json();
-      setOrders(data);
+    try {
+      // В демо-режиме создаем фейковые заказы
+      const demoOrders: Order[] = [
+        {
+          id: '1',
+          total: 129.99,
+          status: 'completed',
+          createdAt: new Date().toISOString(),
+          items: [
+            {
+              id: '1',
+              product: {
+                name: 'Demo Product',
+                images: '/demo-product.jpg'
+              },
+              quantity: 1,
+              price: 129.99
+            }
+          ]
+        }
+      ];
+      setOrders(demoOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,10 +72,8 @@ export default function OrdersPage() {
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'pending':
         return <Clock className="w-5 h-5 text-amber-500" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-rose-500" />;
       default:
-        return <Package className="w-5 h-5 text-slate-500" />;
+        return <XCircle className="w-5 h-5 text-red-500" />;
     }
   };
 
@@ -65,15 +83,20 @@ export default function OrdersPage() {
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-amber-100 text-amber-800';
-      case 'failed':
-        return 'bg-rose-100 text-rose-800';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-red-100 text-red-800';
     }
   };
 
-  if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading orders...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!session) {
@@ -88,7 +111,7 @@ export default function OrdersPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl font-bold text-slate-900 mb-8"
         >
-          Order History
+          My Orders
         </motion.h1>
 
         {orders.length === 0 ? (
@@ -97,82 +120,73 @@ export default function OrdersPage() {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <Package className="mx-auto h-24 w-24 text-slate-300 mb-4" />
-            <p className="text-xl text-slate-500">No orders yet</p>
+            <Package className="w-24 h-24 text-slate-300 mx-auto mb-4" />
+            <p className="text-xl text-slate-600 mb-4">No orders yet</p>
             <button
               onClick={() => router.push('/shop')}
-              className="mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full font-semibold"
+              className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold"
             >
               Start Shopping
             </button>
           </motion.div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order, index) => {
-              // Парсим JSON строку с продуктами
-              const orderItems: OrderItem[] = JSON.parse(order.products);
-              
-              return (
-                <motion.div
-                  key={order.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl p-6 shadow-lg border border-white/20 backdrop-blur-sm"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        Order #{order.id.slice(-8).toUpperCase()}
-                      </h3>
-                      <p className="text-slate-600">
-                        {new Date(order.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 lg:mt-0">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                        {getStatusIcon(order.status)}
-                        <span className="ml-2 capitalize">{order.status}</span>
-                      </span>
-                      <span className="text-xl font-bold text-slate-900">
-                        ${order.total.toFixed(2)}
-                      </span>
-                    </div>
+            {orders.map((order, index) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-2xl p-6 shadow-lg border border-white/20 backdrop-blur-sm"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold text-slate-900">
+                      Order #{order.id}
+                    </h3>
+                    <p className="text-slate-600 text-sm">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(order.status)}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
+                  </div>
+                </div>
 
-                  <div className="border-t border-slate-200 pt-4">
-                    <div className="space-y-3">
-                      {orderItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={item.product.images || '/placeholder-product.jpg'}
-                              alt={item.product.name}
-                              className="w-12 h-12 object-cover rounded-lg"
-                            />
-                            <div>
-                              <div className="font-medium text-slate-900">
-                                {item.product.name}
-                              </div>
-                              <div className="text-sm text-slate-500">
-                                Quantity: {item.quantity}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-slate-900 font-medium">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </div>
-                        </div>
-                      ))}
+                <div className="border-t border-slate-200 pt-4">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 mb-3">
+                      <img
+                        src={item.product.images || '/placeholder-product.jpg'}
+                        alt={item.product.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-slate-900">
+                          {item.product.name}
+                        </h4>
+                        <p className="text-slate-600">
+                          Qty: {item.quantity} × ${item.price}
+                        </p>
+                      </div>
+                      <div className="text-lg font-semibold text-slate-900">
+                        ${(item.quantity * item.price).toFixed(2)}
+                      </div>
                     </div>
+                  ))}
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                    <span className="text-slate-600">Total</span>
+                    <span className="text-xl font-bold text-slate-900">
+                      ${order.total}
+                    </span>
                   </div>
-                </motion.div>
-              );
-            })}
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>
