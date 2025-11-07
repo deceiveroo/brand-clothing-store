@@ -3,55 +3,63 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw } from 'lucide-react';
-import ProductViewer3D from '@/components/ProductViewer3D';
+import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import ProductViewer3D from '@/components/ProductViewer3D';
 
 interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
-  images: string[];
+  images: string;
   category: string;
   featured: boolean;
   inStock: boolean;
-  rating: number;
-  reviewCount: number;
+  createdAt: string;
 }
 
 export default function ProductPage() {
   const params = useParams();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('description');
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) { // ← ДОБАВЬТЕ ПРОВЕРКУ params?.id
       fetchProduct();
     }
-  }, [params.id]);
+  }, [params?.id]); // ← ИСПОЛЬЗУЙТЕ params?.id
 
   const fetchProduct = async () => {
-    // Mock data - in real app, fetch from API
-    const mockProduct: Product = {
-      id: params.id as string,
-      name: 'Neo-Tech Smart Jacket',
-      description: 'Revolutionary smart jacket with advanced temperature regulation, built-in LED lighting system, and smartphone integration. Made from sustainable materials with self-cleaning nanotechnology.',
-      price: 299.99,
-      images: ['/api/placeholder/800/800', '/api/placeholder/800/800', '/api/placeholder/800/800'],
-      category: 'outerwear',
-      featured: true,
-      inStock: true,
-      rating: 4.8,
-      reviewCount: 142,
-    };
-    setProduct(mockProduct);
+    try {
+      const res = await fetch(`/api/products/${params?.id}`); // ← ДОБАВЬТЕ ?.
+      if (res.ok) {
+        const data = await res.json();
+        setProduct(data);
+      } else {
+        router.push('/shop');
+      }
+    } catch (error) {
+      console.error('Failed to fetch product:', error);
+      router.push('/shop');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddToCart = async () => {
-    if (!product) return;
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!product) return; // ← ДОБАВЬТЕ ПРОВЕРКУ product
 
     try {
       const res = await fetch('/api/cart', {
@@ -73,204 +81,210 @@ export default function ProductPage() {
     }
   };
 
-  if (!product) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-24 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+      </div>
+    );
   }
 
-  const get3DModelType = () => {
-    switch (product.category) {
-      case 'outerwear': return 'jacket';
-      case 'footwear': return 'sneaker';
-      case 'accessories': return 'cap';
-      default: return 'jacket';
-    }
-  };
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-slate-600">Product not found</p>
+          <button
+            onClick={() => router.push('/shop')}
+            className="mt-4 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full font-semibold"
+          >
+            Back to Shop
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Преобразуем строку images в массив (если нужно)
+  const imageArray = product.images ? [product.images] : ['/placeholder-product.jpg'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-24">
       <div className="container mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Images & 3D Viewer */}
+          {/* Product Images */}
           <div className="space-y-6">
-            {/* 3D Viewer */}
-            <ProductViewer3D 
-              productType={get3DModelType()}
-              className="h-96 lg:h-[500px]"
-            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="aspect-square bg-white rounded-2xl p-8 shadow-lg border border-white/20 backdrop-blur-sm"
+            >
+              <img
+                src={imageArray[selectedImage]}
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
+            </motion.div>
             
-            {/* Image Thumbnails */}
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {product.images.map((image, index) => (
+            {/* Thumbnail Gallery */}
+            <div className="flex gap-4">
+              {imageArray.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    selectedImage === index ? 'border-cyan-500' : 'border-slate-200'
+                  className={`w-20 h-20 bg-white rounded-xl border-2 ${
+                    selectedImage === index
+                      ? 'border-cyan-500'
+                      : 'border-transparent'
                   }`}
                 >
                   <img
                     src={image}
-                    alt={`${product.name} view ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    alt={`${product.name} ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </button>
               ))}
             </div>
+
+            {/* 3D Viewer for certain products */}
+            {(product.category === 'outerwear' || product.category === 'footwear') && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-8"
+              >
+                <ProductViewer3D
+                  productType={product.category === 'outerwear' ? 'jacket' : 'sneaker'}
+                  className="h-64"
+                />
+              </motion.div>
+            )}
           </div>
 
           {/* Product Info */}
           <div className="space-y-6">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+              <div className="flex items-center gap-2 mb-4">
+                {product.featured && (
+                  <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    Featured
+                  </span>
+                )}
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  product.inStock
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {product.inStock ? 'In Stock' : 'Out of Stock'}
+                </span>
+              </div>
+              
+              <h1 className="text-4xl font-bold text-slate-900 mb-4">
                 {product.name}
               </h1>
               
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex text-amber-400">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.rating)
-                          ? 'text-amber-500 fill-amber-500'
-                          : 'text-slate-300'
-                      }`}
+                      className="w-5 h-5 fill-current"
                     />
                   ))}
                 </div>
-                <span className="text-slate-600">
-                  {product.rating} ({product.reviewCount} reviews)
-                </span>
+                <span className="text-slate-600">(42 reviews)</span>
               </div>
 
-              {/* Price */}
-              <div className="text-4xl font-bold text-slate-900 mb-6">
+              <p className="text-3xl font-bold text-slate-900 mb-6">
                 ${product.price}
-              </div>
-
-              {/* Description */}
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                {product.description}
               </p>
 
-              {/* Features */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Truck className="w-5 h-5" />
-                  <span>Free Shipping</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Shield className="w-5 h-5" />
-                  <span>2-Year Warranty</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <RotateCcw className="w-5 h-5" />
-                  <span>30-Day Returns</span>
-                </div>
-              </div>
-
-              {/* Quantity & Add to Cart */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-slate-700 font-medium">Quantity:</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50"
-                    >
-                      -
-                    </button>
-                    <span className="w-12 text-center font-semibold">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleAddToCart}
-                    className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    Add to Cart
-                  </motion.button>
-                  
-                  <button className="p-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-                    <Heart className="w-5 h-5" />
-                  </button>
-                  
-                  <button className="p-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+              <p className="text-slate-600 leading-relaxed mb-8">
+                {product.description}
+              </p>
             </motion.div>
 
-            {/* Product Details Tabs */}
+            {/* Quantity Selector */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-6 shadow-lg border border-white/20 backdrop-blur-sm"
+              className="flex items-center gap-4 mb-6"
             >
-              <div className="border-b border-slate-200 mb-6">
-                <nav className="flex gap-8">
-                  {['description', 'specifications', 'reviews', 'shipping'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`pb-4 px-2 font-medium capitalize border-b-2 transition-colors ${
-                        activeTab === tab
-                          ? 'border-cyan-500 text-cyan-600'
-                          : 'border-transparent text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </nav>
+              <span className="text-slate-700 font-medium">Quantity:</span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50"
+                >
+                  -
+                </button>
+                <span className="w-12 text-center font-semibold">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50"
+                >
+                  +
+                </button>
               </div>
+            </motion.div>
 
-              <div className="prose prose-slate max-w-none">
-                {activeTab === 'description' && (
-                  <div>
-                    <p>Experience the future of fashion with our Neo-Tech Smart Jacket. Designed for the modern urban explorer, this jacket combines cutting-edge technology with sustainable materials.</p>
-                    <ul className="mt-4 space-y-2">
-                      <li>• Advanced temperature regulation system</li>
-                      <li>• Built-in LED lighting with customizable patterns</li>
-                      <li>• Smartphone app integration</li>
-                      <li>• Self-cleaning nanotechnology</li>
-                      <li>• Water and wind resistant</li>
-                    </ul>
-                  </div>
-                )}
-                
-                {activeTab === 'specifications' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <strong>Material:</strong> Smart Fabric Pro
-                    </div>
-                    <div>
-                      <strong>Care:</strong> Machine wash cold
-                    </div>
-                    <div>
-                      <strong>Weight:</strong> 850g
-                    </div>
-                    <div>
-                      <strong>Battery:</strong> 48 hours
-                    </div>
-                  </div>
-                )}
+            {/* Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex gap-4 mb-8"
+            >
+              <button
+                onClick={handleAddToCart}
+                disabled={!product.inStock}
+                className="flex-1 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Add to Cart
+              </button>
+              
+              <button className="p-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                <Heart className="w-6 h-6 text-slate-600" />
+              </button>
+            </motion.div>
+
+            {/* Features */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="grid grid-cols-2 gap-4 py-6 border-t border-slate-200"
+            >
+              <div className="flex items-center gap-3">
+                <Truck className="w-6 h-6 text-cyan-500" />
+                <div>
+                  <div className="font-semibold text-slate-900">Free Shipping</div>
+                  <div className="text-sm text-slate-600">Worldwide</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Shield className="w-6 h-6 text-cyan-500" />
+                <div>
+                  <div className="font-semibold text-slate-900">2-Year Warranty</div>
+                  <div className="text-sm text-slate-600">Full coverage</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <RotateCcw className="w-6 h-6 text-cyan-500" />
+                <div>
+                  <div className="font-semibold text-slate-900">Easy Returns</div>
+                  <div className="text-sm text-slate-600">30 days</div>
+                </div>
               </div>
             </motion.div>
           </div>
