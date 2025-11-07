@@ -41,7 +41,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
-    } else if (status === 'authenticated' && session?.user && 'role' in session.user && session.user.role !== 'admin') {
+    } else if (status === 'authenticated' && session?.user && 'role' in session.user && (session.user as any).role !== 'admin') {
       router.push('/');
     } else {
       fetchProducts();
@@ -81,7 +81,7 @@ export default function AdminPage() {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!session || session.user.role !== 'admin') {
+  if (!session || (session.user as any).role !== 'admin') {
     return null;
   }
 
@@ -263,7 +263,17 @@ function StatCard({ icon, title, value, color }: { icon: React.ReactNode; title:
 
 // Product Modal Component
 function ProductModal({ product, onClose, onSave }: { product?: Product | null; onClose: () => void; onSave: () => void }) {
-  const [formData, setFormData] = useState({
+  interface ProductFormData {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    featured: boolean;
+    inStock: boolean;
+    images: string[];
+  }
+
+  const [formData, setFormData] = useState<ProductFormData>({
     name: product?.name || '',
     description: product?.description || '',
     price: product?.price || 0,
