@@ -1,42 +1,8 @@
 'use client';
 
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, Float } from '@react-three/drei';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Suspense, useRef } from 'react';
-import { Sparkles, ArrowRight, Zap, Shield, Globe } from 'lucide-react';
-import * as THREE from 'three';
-
-// Анимированная модель футболки
-function TShirtModel() {
-  const { scene } = useGLTF('/models/t-shirt.glb');
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.05;
-    }
-  });
-
-  return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-      <group ref={groupRef}>
-        <primitive object={scene} scale={2.2} />
-      </group>
-    </Float>
-  );
-}
-
-// Загрузчик для 3D модели
-function ModelLoader() {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
-    </div>
-  );
-}
+import { ArrowRight, Zap, Shield, Globe, Sparkles } from 'lucide-react';
 
 export default function Home() {
   const features = [
@@ -69,9 +35,6 @@ export default function Home() {
       {/* Анимированный фон */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-purple-500/5 to-transparent"></div>
-        <Sparkles className="absolute top-20 left-10 text-cyan-400/20 animate-pulse" size={40} />
-        <Sparkles className="absolute bottom-40 right-20 text-purple-400/20 animate-pulse delay-1000" size={30} />
-        <Sparkles className="absolute top-1/3 right-1/4 text-blue-400/20 animate-pulse delay-500" size={25} />
       </div>
 
       {/* Navigation */}
@@ -88,20 +51,11 @@ export default function Home() {
                 NEXUS
               </h1>
             </motion.div>
-            <div className="flex gap-8">
-              {['Shop', 'Collection', 'About', 'Contact'].map((item) => (
-                <Link 
-                  key={item}
-                  href={`/${item.toLowerCase()}`} 
-                  className="text-white/70 hover:text-white transition-all duration-300 hover:scale-105"
-                >
-                  {item}
-                </Link>
-              ))}
-              <Link 
-                href="/cart" 
-                className="px-4 py-2 bg-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition-all duration-300"
-              >
+            <div className="flex gap-6">
+              <Link href="/shop" className="text-white/70 hover:text-white transition-colors">
+                Shop
+              </Link>
+              <Link href="/cart" className="text-white/70 hover:text-white transition-colors">
                 Cart
               </Link>
             </div>
@@ -142,14 +96,16 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
-                  className="group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl font-semibold text-white shadow-2xl flex items-center gap-3 transition-all duration-300"
-                >
-                  <span>Explore Collection</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
+                <Link href="/shop">
+                  <motion.button
+                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                    className="group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl font-semibold text-white shadow-2xl flex items-center gap-3 transition-all duration-300"
+                  >
+                    <span>Explore Collection</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </Link>
                 <motion.button
                   whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.15)" }}
                   whileTap={{ scale: 0.95 }}
@@ -176,34 +132,18 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* 3D Model */}
+            {/* Placeholder для изображения вместо 3D модели */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, rotateY: 10 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 100 }}
-              className="relative h-96 lg:h-[500px] rounded-3xl overflow-hidden bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-transparent border border-white/10 backdrop-blur-xl"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              className="relative h-96 lg:h-[500px] rounded-3xl overflow-hidden bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-transparent border border-white/10 backdrop-blur-xl flex items-center justify-center"
             >
-              <Canvas shadows camera={{ position: [4, 2, 5], fov: 25 }}>
-                <Suspense fallback={null}>
-                  <ambientLight intensity={0.4} />
-                  <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-                  <pointLight position={[-10, -10, -10]} intensity={0.5} />
-                  
-                  <TShirtModel />
-                  
-                  <OrbitControls 
-                    enableZoom={false}
-                    enablePan={false}
-                    maxPolarAngle={Math.PI / 2}
-                    minPolarAngle={Math.PI / 3}
-                    autoRotate
-                    autoRotateSpeed={2}
-                  />
-                  <Environment preset="studio" />
-                </Suspense>
-              </Canvas>
-              
-              {/* Glow эффект */}
+              <div className="text-center">
+                <Sparkles className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-white mb-2">Innovative Design</h3>
+                <p className="text-white/60">Experience next-generation fashion</p>
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/5 to-transparent pointer-events-none"></div>
             </motion.div>
           </div>
@@ -264,19 +204,18 @@ export default function Home() {
             <p className="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
               Join thousands of customers who have already upgraded their wardrobe with Nexus.
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.4)" }}
-              whileTap={{ scale: 0.95 }}
-              className="px-12 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl font-semibold text-white text-lg shadow-2xl"
-            >
-              Start Shopping Now
-            </motion.button>
+            <Link href="/shop">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.4)" }}
+                whileTap={{ scale: 0.95 }}
+                className="px-12 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl font-semibold text-white text-lg shadow-2xl"
+              >
+                Start Shopping Now
+              </motion.button>
+            </Link>
           </div>
         </div>
       </motion.section>
     </div>
   );
 }
-
-// Preload модель
-useGLTF.preload('/models/t-shirt.glb');
