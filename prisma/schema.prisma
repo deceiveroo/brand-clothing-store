@@ -16,12 +16,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String  @map("provider_account_id")
-  refresh_token     String? // Убрали @db.Text для SQLite
-  access_token      String? // Убрали @db.Text для SQLite
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? // Убрали @db.Text для SQLite
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -48,6 +48,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
+  cartItems     CartItem[]
 
   @@map("users")
 }
@@ -66,11 +67,11 @@ model Product {
   name        String
   description String
   price       Float
-  images      String   // Заменили String[] на String (храним как JSON или одну картинку)
+  images      String
   category    String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  orders      Order[]
+  cartItems   CartItem[]
 
   @@map("products")
 }
@@ -78,7 +79,7 @@ model Product {
 model Order {
   id         String   @id @default(cuid())
   userId     String   @map("user_id")
-  products   String   // Храним как JSON строку
+  products   String
   total      Float
   status     String   @default("pending")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -94,6 +95,7 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now()) @map("created_at")
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("cart_items")
