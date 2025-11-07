@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from '@/lib/prisma';
 
-const authConfig = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -35,7 +35,7 @@ const authConfig = {
     })
   ],
   callbacks: {
-    async session({ token, session }) {
+    async session({ token, session }: any) {
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
@@ -45,7 +45,7 @@ const authConfig = {
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -53,6 +53,4 @@ const authConfig = {
       return token;
     }
   }
-};
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+});
